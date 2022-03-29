@@ -3,7 +3,7 @@ import math
 import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
-
+from numpy.linalg import inv
 import numpy as np
 from skimage.metrics import structural_similarity as compare_ssim
 
@@ -136,32 +136,40 @@ class ImageReader:
     TestImage = "Fourth-Year-Project\JPEG Encryptor\deers.jpg"
 
 
-precision = 9
-N = 8
+properDCT = DCT.normal1D(8)
+pd.set_option('display.float_format', lambda x: '%.3f' % x)
+result = np.matmul(ImageReader.SampleChunk[1], properDCT)
+result[abs(result) < 10] = 0
+# np.set_printoptions(precision=5)
+result = np.matmul(result, inv(properDCT))
+print(result)
 
-image = ImageReader.getImage(ImageReader.TestImage, 8)
-chopped = ImageReader.chopUpImage(image, N)
+# precision = 9
+# N = 8
 
-dctLossy = DCT.int1D(N, precision)
+# image = ImageReader.getImage(ImageReader.TestImage, 8)
+# chopped = ImageReader.chopUpImage(image, N)
 
-print(dctLossy)
+# dctLossy = DCT.int1D(N, precision)
 
-# print(DCT.convertImage(
-#     chopped['pieces'][0], dctLossy, precision))
+# print(dctLossy)
 
-# print(DCT.removeSmallBits(DCT.convertImage(
-#     chopped['pieces'][0], dctLossy, precision)))
-total = 0
-for i in range(0, len(chopped['pieces'])):
-    chopped['pieces'][i] = DCT.convertImage(
-        chopped['pieces'][i], dctLossy, precision)
-    chopped['pieces'][i] = DCT.removeSmallBits(chopped['pieces'][i])
-    total += np.sum(chopped['pieces'][i] == 0)
-    chopped['pieces'][i] = DCT.remakeImageImage(
-        chopped['pieces'][i], dctLossy, precision)
-print(total / (64*len(chopped['pieces'])))
-reconstructed = ImageReader.reconstructImage(chopped, N)
-ImageReader.displayImage(reconstructed)
+# # print(DCT.convertImage(
+# #     chopped['pieces'][0], dctLossy, precision))
+
+# # print(DCT.removeSmallBits(DCT.convertImage(
+# #     chopped['pieces'][0], dctLossy, precision)))
+# total = 0
+# for i in range(0, len(chopped['pieces'])):
+#     chopped['pieces'][i] = DCT.convertImage(
+#         chopped['pieces'][i], dctLossy, precision)
+#     chopped['pieces'][i] = DCT.removeSmallBits(chopped['pieces'][i])
+#     total += np.sum(chopped['pieces'][i] == 0)
+#     chopped['pieces'][i] = DCT.remakeImageImage(
+#         chopped['pieces'][i], dctLossy, precision)
+# print(total / (64*len(chopped['pieces'])))
+# reconstructed = ImageReader.reconstructImage(chopped, N)
+# ImageReader.displayImage(reconstructed)
 
 
 def testImageSets(precision, N):
