@@ -58,7 +58,7 @@ class DCT:
         return np.matmul(np.matmul(np.transpose(dct), image), dct)
 
     def removeSmallBits(chunk):
-        chunk[abs(chunk) < 10] = 0
+        chunk[abs(chunk) < 100] = 0
         return chunk
 
 
@@ -115,6 +115,17 @@ class ImageReader:
                    [-5, -23, -18, 21, 8, 8, 52, 38],
                    [-18, 8, -5, -5, -5, 8, 26, 8]]
 
+    SampleChunk2 = [
+        [166, 166, 55, 55, 55, 49, 134, 99],
+        [23, 255, 255, 55, 255, 80, 31, 23],
+        [166, 37, 0, 55, 23, 80, 55, 99],
+        [55, 0, 0, 43, 23, 49, 134, 99],
+        [255, 0, 17, 55, 65, 98, 255, 55],
+        [166, 166, 255, 75, 23, 49, 134, 0],
+        [13, 55, 23, 55, 80, 49, 43, 99],
+        [205, 10, 55, 55, 23, 21, 49, 255],
+    ]
+
     ImageSetPaths = [
         "Image Test Sets\\artificial.pgm",
         "Image Test Sets\\big_building.pgm",
@@ -136,40 +147,51 @@ class ImageReader:
     TestImage = "Fourth-Year-Project\JPEG Encryptor\deers.jpg"
 
 
-properDCT = DCT.normal1D(8)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
-result = np.matmul(ImageReader.SampleChunk[1], properDCT)
-result[abs(result) < 10] = 0
+# properDCT = DCT.normal1D(8)
+# pd.set_option('display.float_format', lambda x: '%.3f' % x)
+# result = np.matmul(ImageReader.SampleChunk2, properDCT)
+# result[abs(result) < 5] = 0
 # np.set_printoptions(precision=5)
-result = np.matmul(result, inv(properDCT))
-print(result)
+# print(result)
+# total = np.sum(result == 0)
+# print(total / 64)
+# result = np.matmul(result, inv(properDCT))
 
-# precision = 9
-# N = 8
+# psnr = cv2.PSNR(np.array(ImageReader.SampleChunk2,
+#                          dtype=np.uint8), np.array(result, dtype=np.uint8))
+# print(psnr)
 
-# image = ImageReader.getImage(ImageReader.TestImage, 8)
-# chopped = ImageReader.chopUpImage(image, N)
+precision = 9
+N = 8
 
-# dctLossy = DCT.int1D(N, precision)
+image = ImageReader.getImage(ImageReader.TestImage, N)
+chopped = ImageReader.chopUpImage(image, N)
 
-# print(dctLossy)
+dctLossy = DCT.int1D(N, precision)
 
-# # print(DCT.convertImage(
-# #     chopped['pieces'][0], dctLossy, precision))
+print(dctLossy)
 
-# # print(DCT.removeSmallBits(DCT.convertImage(
-# #     chopped['pieces'][0], dctLossy, precision)))
-# total = 0
-# for i in range(0, len(chopped['pieces'])):
-#     chopped['pieces'][i] = DCT.convertImage(
-#         chopped['pieces'][i], dctLossy, precision)
-#     chopped['pieces'][i] = DCT.removeSmallBits(chopped['pieces'][i])
-#     total += np.sum(chopped['pieces'][i] == 0)
-#     chopped['pieces'][i] = DCT.remakeImageImage(
-#         chopped['pieces'][i], dctLossy, precision)
-# print(total / (64*len(chopped['pieces'])))
-# reconstructed = ImageReader.reconstructImage(chopped, N)
-# ImageReader.displayImage(reconstructed)
+# print(DCT.convertImage(
+#     chopped['pieces'][0], dctLossy, precision))
+
+# print(DCT.removeSmallBits(DCT.convertImage(
+#     chopped['pieces'][0], dctLossy, precision)))
+total = 0
+for i in range(0, len(chopped['pieces'])):
+    chopped['pieces'][i] = DCT.convertImage(
+        chopped['pieces'][i], dctLossy, precision)
+    temp = np.sum(chopped['pieces'][i] == 0)
+    chopped['pieces'][i] = DCT.removeSmallBits(chopped['pieces'][i])
+    print(np.sum(chopped['pieces'][i] == 0))
+    total += np.sum(chopped['pieces'][i] == 0)
+    total -= temp
+    chopped['pieces'][i] = DCT.remakeImageImage(
+        chopped['pieces'][i], dctLossy, precision)
+print(total / (N*N*len(chopped['pieces'])))
+print(total)
+reconstructed = ImageReader.reconstructImage(chopped, N)
+
+ImageReader.displayImage(reconstructed)
 
 
 def testImageSets(precision, N):
